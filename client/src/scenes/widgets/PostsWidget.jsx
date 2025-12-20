@@ -9,9 +9,11 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   const token = useSelector((state) => state.token);
 
   const getPosts = async () => {
-    const response = await fetch("http://localhost:3001/posts", {
+    const response = await fetch("http://localhost:6001/posts", {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
     const data = await response.json();
     dispatch(setPosts({ posts: data }));
@@ -19,10 +21,12 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 
   const getUserPosts = async () => {
     const response = await fetch(
-      `http://localhost:3001/posts/${userId}/posts`,
+      `http://localhost:6001/posts/${userId}/posts`,
       {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
     const data = await response.json();
@@ -39,33 +43,21 @@ const PostsWidget = ({ userId, isProfile = false }) => {
 
   return (
     <>
-      {posts.map(
-        ({
-          _id,
-          userId,
-          firstName,
-          lastName,
-          description,
-          location,
-          picturePath,
-          userPicturePath,
-          likes,
-          comments,
-        }) => (
+      {Array.isArray(posts) &&
+        posts.map((post) => (
           <PostWidget
-            key={_id}
-            postId={_id}
-            postUserId={userId}
-            name={`${firstName} ${lastName}`}
-            description={description}
-            location={location}
-            picturePath={picturePath}
-            userPicturePath={userPicturePath}
-            likes={likes}
-            comments={comments}
+            key={post._id}
+            postId={post._id}
+            name={`${post.userId.firstName} ${post.userId.lastName}`}
+            location={post.userId.location}
+            userPicturePath={post.userId.picturePath}
+            description={post.description}
+            picturePath={post.picturePath}
+            upvotes={post.upvotes}
+            downvotes={post.downvotes}
+            comments={post.comments}
           />
-        )
-      )}
+        ))}
     </>
   );
 };

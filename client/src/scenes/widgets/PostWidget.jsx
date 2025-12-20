@@ -1,83 +1,131 @@
 import {
   ChatBubbleOutlineOutlined,
-  FavoriteBorderOutlined,
-  FavoriteOutlined,
   ShareOutlined,
 } from "@mui/icons-material";
-import { Box, Divider, IconButton, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Divider,
+  IconButton,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import FlexBetween from "components/FlexBetween";
-import Friend from "components/Friend";
 import WidgetWrapper from "components/WidgetWrapper";
+import UserImage from "components/UserImage";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
 
+
+
 const PostWidget = ({
   postId,
-  postUserId,
   name,
   description,
   location,
   picturePath,
   userPicturePath,
-  likes,
-  comments,
+  upvotes = [],
+  downvotes = [],
+  comments = [],
 }) => {
   const [isComments, setIsComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
   const dispatch = useDispatch();
   const token = useSelector((state) => state.token);
-  const loggedInUserId = useSelector((state) => state.user._id);
-  const isLiked = Boolean(likes[loggedInUserId]);
-  const likeCount = Object.keys(likes).length;
+  const loggedInUserId = useSelector((state) => state.user?._id);
 
   const { palette } = useTheme();
   const main = palette.neutral.main;
-  const primary = palette.primary.main;
+  const medium = palette.neutral.medium;
 
-  const patchLike = async () => {
-    const response = await fetch(`http://localhost:3001/posts/${postId}/like`, {
-      method: "PATCH",
+  const isUpvoted = upvotes.includes(loggedInUserId);
+  const isDownvoted = downvotes.includes(loggedInUserId);
+
+  const votePost = async (voteType) => {
+    const response = await fetch(
+      `http://localhost:6001/posts/${postId}/vote`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ voteType }),
+      }
+    );
+
+    const updatedPost = await response.json();
+    dispatch(setPost({ post: updatedPost }));
+  };
+  const addComment = async () => {
+  if (!commentText.trim()) return;
+
+  const response = await fetch(
+    `http://localhost:6001/posts/${postId}/comment`,
+    {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userId: loggedInUserId }),
-    });
-    const updatedPost = await response.json();
-    dispatch(setPost({ post: updatedPost }));
-  };
+      body: JSON.stringify({ text: commentText }),
+    }
+  );
+
+  const updatedPost = await response.json();
+  dispatch(setPost({ post: updatedPost }));
+  setCommentText("");
+};
+
 
   return (
     <WidgetWrapper m="2rem 0">
-      <Friend
-        friendId={postUserId}
-        name={name}
-        subtitle={location}
-        userPicturePath={userPicturePath}
-      />
+      {/* 🔹 HEADER */}
+      <FlexBetween gap="1rem">
+        <FlexBetween gap="0.75rem">
+          <UserImage image={userPicturePath} size="55px" />
+          <Box>
+            <Typography variant="h6" fontWeight="500" color={main}>
+              {name}
+            </Typography>
+            <Typography fontSize="0.75rem" color={medium}>
+              {location}
+            </Typography>
+          </Box>
+        </FlexBetween>
+      </FlexBetween>
+
+      {/* 🔹 CONTENT */}
       <Typography color={main} sx={{ mt: "1rem" }}>
         {description}
       </Typography>
+
       {picturePath && (
         <img
           width="100%"
           height="auto"
-          alt="post"
+          alt="issue"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`http://localhost:3001/assets/${picturePath}`}
+          src={`http://localhost:6001/assets/${picturePath}`}
         />
       )}
-      <FlexBetween mt="0.25rem">
+
+      {/* 🔹 ACTIONS */}
+      <FlexBetween mt="0.5rem">
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
-            <IconButton onClick={patchLike}>
-              {isLiked ? (
-                <FavoriteOutlined sx={{ color: primary }} />
-              ) : (
-                <FavoriteBorderOutlined />
-              )}
+            <IconButton onClick={() => votePost("up")}>
+              👍
             </IconButton>
-            <Typography>{likeCount}</Typography>
+            <Typography>{upvotes.length}</Typography>
+          </FlexBetween>
+
+          <FlexBetween gap="0.3rem">
+            <IconButton onClick={() => votePost("down")}>
+              👎
+            </IconButton>
+            <Typography>{downvotes.length}</Typography>
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
@@ -92,19 +140,49 @@ const PostWidget = ({
           <ShareOutlined />
         </IconButton>
       </FlexBetween>
+
       {isComments && (
-        <Box mt="0.5rem">
-          {comments.map((comment, i) => (
-            <Box key={`${name}-${i}`}>
-              <Divider />
-              <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-                {comment}
-              </Typography>
-            </Box>
-          ))}
-          <Divider />
-        </Box>
-      )}
+  <Box mt="0.5rem">
+    {/* 🔹 Comment Input */}
+    <Box display="flex" gap="0.5rem" mb="0.5rem">
+      <input
+        type="text"
+        placeholder="Write a comment..."
+        value={commentText}
+        onChange={(e) => setCommentText(e.target.value)}
+        style={{
+          flex: 1,
+          padding: "0.5rem",
+          borderRadius: "0.5rem",
+          border: "1px solid #ccc",
+        }}
+      />
+      <button
+        onClick={addComment}
+        style={{
+          padding: "0.5rem 1rem",
+          borderRadius: "0.5rem",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Post
+      </button>
+    </Box>
+
+    {/* 🔹 Existing Comments */}
+    {comments.map((comment, i) => (
+      <Box key={i}>
+        <Divider />
+        <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
+          {comment.text}
+        </Typography>
+      </Box>
+    ))}
+    <Divider />
+  </Box>
+)}
+
     </WidgetWrapper>
   );
 };

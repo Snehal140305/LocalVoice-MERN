@@ -29,10 +29,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    friends: {
-      type: Array,
-      default: [],
+    role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
     },
+   
     location: String,
     occupation: String,
     viewedProfile: Number,

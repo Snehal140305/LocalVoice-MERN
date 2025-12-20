@@ -1,35 +1,75 @@
 import mongoose from "mongoose";
 
-const postSchema = mongoose.Schema(
+const PostSchema = new mongoose.Schema(
   {
     userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    title: {
       type: String,
       required: true,
     },
-    firstName: {
+
+    description: {
       type: String,
       required: true,
     },
-    lastName: {
+
+    picturePath: {
       type: String,
+    },
+
+    category: {
+      type: String,
+      enum: ["Road", "Water", "Electricity", "Garbage", "Other"],
       required: true,
     },
-    location: String,
-    description: String,
-    picturePath: String,
-    userPicturePath: String,
-    likes: {
-      type: Map,
-      of: Boolean,
+
+    location: {
+      area: String,
+      city: String,
+      pincode: String,
     },
-    comments: {
-      type: Array,
-      default: [],
+
+    upvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    downvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    status: {
+      type: String,
+      enum: ["Open", "In Progress", "Resolved"],
+      default: "Open",
     },
+
+    comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        text: String,
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const Post = mongoose.model("Post", postSchema);
-
+const Post = mongoose.model("Post", PostSchema);
 export default Post;

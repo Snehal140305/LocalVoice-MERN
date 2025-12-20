@@ -1,11 +1,7 @@
 import {
   EditOutlined,
   DeleteOutlined,
-  AttachFileOutlined,
-  GifBoxOutlined,
   ImageOutlined,
-  MicOutlined,
-  MoreHorizOutlined,
 } from "@mui/icons-material";
 import {
   Box,
@@ -15,7 +11,6 @@ import {
   useTheme,
   Button,
   IconButton,
-  useMediaQuery,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Dropzone from "react-dropzone";
@@ -27,34 +22,65 @@ import { setPosts } from "state";
 
 const MyPostWidget = ({ picturePath }) => {
   const dispatch = useDispatch();
+  const { palette } = useTheme();
+  const token = useSelector((state) => state.token);
+
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
-  const [post, setPost] = useState("");
-  const { palette } = useTheme();
-  const { _id } = useSelector((state) => state.user);
-  const token = useSelector((state) => state.token);
-  const isNonMobileScreens = useMediaQuery("(min-width: 1000px)");
-  const mediumMain = palette.neutral.mediumMain;
-  const medium = palette.neutral.medium;
+
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("Road");
+  const [description, setDescription] = useState("");
 
   const handlePost = async () => {
-    const formData = new FormData();
-    formData.append("userId", _id);
-    formData.append("description", post);
-    if (image) {
-      formData.append("picture", image);
-      formData.append("picturePath", image.name);
-    }
+    try {
+      console.log("HANDLE POST CLICKED");
 
-    const response = await fetch(`http://localhost:3001/posts`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const posts = await response.json();
-    dispatch(setPosts({ posts }));
-    setImage(null);
-    setPost("");
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+
+      if (image) {
+        formData.append("picture", image);
+        formData.append("picturePath", image.name);
+      }
+
+      const response = await fetch("http://localhost:6001/posts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      console.log("POST STATUS:", response.status);
+
+      if (!response.ok) {
+        alert("Post failed");
+        return;
+      }
+
+      // 🔁 Re-fetch all posts
+      const postsResponse = await fetch("http://localhost:6001/posts", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const allPosts = await postsResponse.json();
+      dispatch(setPosts({ posts: allPosts }));
+
+      // reset fields
+      setTitle("");
+      setDescription("");
+      setCategory("Road");
+      setImage(null);
+      setIsImage(false);
+    } catch (error) {
+      console.error("Post error:", error);
+    }
   };
 
   return (
@@ -62,20 +88,53 @@ const MyPostWidget = ({ picturePath }) => {
       <FlexBetween gap="1.5rem">
         <UserImage image={picturePath} />
         <InputBase
-          placeholder="What's on your mind..."
-          onChange={(e) => setPost(e.target.value)}
-          value={post}
+          placeholder="Issue title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           sx={{
             width: "100%",
             backgroundColor: palette.neutral.light,
             borderRadius: "2rem",
-            padding: "1rem 2rem",
+            padding: "0.75rem 1.5rem",
           }}
         />
       </FlexBetween>
+
+      <InputBase
+        placeholder="Describe the issue..."
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        sx={{
+          width: "100%",
+          backgroundColor: palette.neutral.light,
+          borderRadius: "2rem",
+          padding: "1rem 2rem",
+          marginTop: "1rem",
+        }}
+      />
+
+      <Box mt="1rem">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "0.75rem",
+            borderRadius: "1rem",
+            border: "none",
+          }}
+        >
+          <option value="Road">Road</option>
+          <option value="Water">Water</option>
+          <option value="Electricity">Electricity</option>
+          <option value="Garbage">Garbage</option>
+          <option value="Other">Other</option>
+        </select>
+      </Box>
+
       {isImage && (
         <Box
-          border={`1px solid ${medium}`}
+          border={`1px solid ${palette.neutral.medium}`}
           borderRadius="5px"
           mt="1rem"
           p="1rem"
@@ -83,7 +142,7 @@ const MyPostWidget = ({ picturePath }) => {
           <Dropzone
             acceptedFiles=".jpg,.jpeg,.png"
             multiple={false}
-            onDrop={(acceptedFiles) => setImage(acceptedFiles[0])}
+            onDrop={(files) => setImage(files[0])}
           >
             {({ getRootProps, getInputProps }) => (
               <FlexBetween>
@@ -92,7 +151,7 @@ const MyPostWidget = ({ picturePath }) => {
                   border={`2px dashed ${palette.primary.main}`}
                   p="1rem"
                   width="100%"
-                  sx={{ "&:hover": { cursor: "pointer" } }}
+                  sx={{ cursor: "pointer" }}
                 >
                   <input {...getInputProps()} />
                   {!image ? (
@@ -105,10 +164,7 @@ const MyPostWidget = ({ picturePath }) => {
                   )}
                 </Box>
                 {image && (
-                  <IconButton
-                    onClick={() => setImage(null)}
-                    sx={{ width: "15%" }}
-                  >
+                  <IconButton onClick={() => setImage(null)}>
                     <DeleteOutlined />
                   </IconButton>
                 )}
@@ -122,40 +178,11 @@ const MyPostWidget = ({ picturePath }) => {
 
       <FlexBetween>
         <FlexBetween gap="0.25rem" onClick={() => setIsImage(!isImage)}>
-          <ImageOutlined sx={{ color: mediumMain }} />
-          <Typography
-            color={mediumMain}
-            sx={{ "&:hover": { cursor: "pointer", color: medium } }}
-          >
-            Image
-          </Typography>
+          <ImageOutlined sx={{ color: palette.neutral.mediumMain }} />
+          <Typography color={palette.neutral.mediumMain}>Image</Typography>
         </FlexBetween>
 
-        {isNonMobileScreens ? (
-          <>
-            <FlexBetween gap="0.25rem">
-              <GifBoxOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Clip</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <AttachFileOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Attachment</Typography>
-            </FlexBetween>
-
-            <FlexBetween gap="0.25rem">
-              <MicOutlined sx={{ color: mediumMain }} />
-              <Typography color={mediumMain}>Audio</Typography>
-            </FlexBetween>
-          </>
-        ) : (
-          <FlexBetween gap="0.25rem">
-            <MoreHorizOutlined sx={{ color: mediumMain }} />
-          </FlexBetween>
-        )}
-
         <Button
-          disabled={!post}
           onClick={handlePost}
           sx={{
             color: palette.background.alt,
@@ -163,7 +190,7 @@ const MyPostWidget = ({ picturePath }) => {
             borderRadius: "3rem",
           }}
         >
-          POST
+          RAISE ISSUE
         </Button>
       </FlexBetween>
     </WidgetWrapper>

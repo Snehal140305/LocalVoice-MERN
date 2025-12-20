@@ -1,73 +1,100 @@
 import Post from "../models/Post.js";
-import User from "../models/User.js";
 
-/* CREATE */
+/* CREATE ISSUE (was Create Post) */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, picturePath } = req.body;
-    const user = await User.findById(userId);
-    const newPost = new Post({
-      userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      location: user.location,
+    const {
+      title,
       description,
-      userPicturePath: user.picturePath,
-      picturePath,
-      likes: {},
-      comments: [],
-    });
-    await newPost.save();
+      category,
+      location,
+    } = req.body;
 
-    const post = await Post.find();
-    res.status(201).json(post);
+    const newPost = new Post({
+      userId: req.user.id,
+      title,
+      description,
+      category,
+      location,
+      picturePath: req.file?.filename,
+    });
+
+    const savedPost = await newPost.save();
+    res.status(201).json(savedPost);
   } catch (err) {
-    res.status(409).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-/* READ */
+/* GET ALL ISSUES (was Feed Posts) */
 export const getFeedPosts = async (req, res) => {
   try {
-    const post = await Post.find();
-    res.status(200).json(post);
+    const posts = await Post.find()
+      .populate("userId", "firstName lastName location picturePath")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(posts);
   } catch (err) {
-    res.status(404).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-export const getUserPosts = async (req, res) => {
+/* VOTE ISSUE (Upvote / Downvote) */
+export const votePost = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const post = await Post.find({ userId });
-    res.status(200).json(post);
-  } catch (err) {
-    res.status(404).json({ message: err.message });
-  }
-};
+    const { voteType } = req.body; // "up" or "down"
+    const postId = req.params.id;
+    const userId = req.user.id;
 
-/* UPDATE */
-export const likePost = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { userId } = req.body;
-    const post = await Post.findById(id);
-    const isLiked = post.likes.get(userId);
-
-    if (isLiked) {
-      post.likes.delete(userId);
-    } else {
-      post.likes.set(userId, true);
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
 
-    const updatedPost = await Post.findByIdAndUpdate(
-      id,
-      { likes: post.likes },
-      { new: true }
+    // Remove existing vote
+    post.upvotes.pull(userId);
+    post.downvotes.pull(userId);
+
+    // Apply new vote
+    if (voteType === "up") {
+      post.upvotes.push(userId);
+    } else if (voteType === "down") {
+      post.downvotes.push(userId);
+    }
+
+    await post.save();
+
+    // 🔥 IMPORTANT: return POPULATED post
+    const populatedPost = await Post.findById(postId).populate(
+      "userId",
+      "firstName lastName location picturePath"
     );
 
-    res.status(200).json(updatedPost);
+    res.status(200).json(populatedPost);
   } catch (err) {
-    res.status(404).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
+
+
+/* ADD COMMENT */
+export const addComment = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    post.comments.push({
+      userId: req.user.id,
+      text: req.body.text,
+    });
+
+    await post.save();
+
+    const populatedPost = await Post.findById(req.params.id)
+      .populate("userId", "firstName lastName location picturePath");
+
+    res.status(200).json(populatedPost);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
