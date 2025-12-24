@@ -97,4 +97,48 @@ export const addComment = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+/* DELETE ISSUE */
+export const deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) return res.status(404).json({ message: "Issue not found" });
+
+    // 🔒 Only creator can delete
+    if (post.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await post.deleteOne();
+    res.status(200).json({ message: "Issue deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+/* GET CITY ISSUE STATS */
+export const getIssueStats = async (req, res) => {
+  try {
+    const stats = await Post.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 } } }
+    ]);
+
+    const formattedStats = {
+      Road: 0,
+      Water: 0,
+      Electricity: 0,
+      Garbage: 0,
+      Other: 0,
+    };
+
+    stats.forEach((item) => {
+      formattedStats[item._id] = item.count;
+    });
+
+    res.status(200).json(formattedStats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 

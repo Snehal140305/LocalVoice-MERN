@@ -14,10 +14,8 @@ import {
   Search,
   DarkMode,
   LightMode,
-  Notifications,
   Menu,
   Close,
-  Light,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { setMode, setLogout } from "state";
@@ -33,9 +31,7 @@ const Navbar = () => {
 
   const theme = useTheme();
   const neutralLight = theme.palette.neutral.light;
-  const dark = theme.palette.neutral.dark;
   const background = theme.palette.background.default;
-  const primaryLight = theme.palette.primary.light;
   const alt = theme.palette.background.alt;
 
   const fullName = `${user.firstName} ${user.lastName}`;
@@ -47,36 +43,33 @@ const Navbar = () => {
       zIndex="1000"
       sx={{
         backgroundColor: alt,
-        boxShadow: "0 2px 8px rgba(7, 7, 7, 1)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       }}
     >
       <FlexBetween padding="0.75rem 6%">
         {/* LEFT */}
-        <FlexBetween gap="1.75rem">
-          <Typography
-            fontWeight="700"
-            fontSize="clamp(1.1rem, 2rem, 2.2rem)"
-            color="primary"
-            onClick={() => navigate("/home")}
-            sx={{
-              letterSpacing: "0.5px",
-              "&:hover": {
-                color: primaryLight,
-                cursor: "pointer",
-              },
-            }}
-          >
-            LocalVoice
-          </Typography>
+        <FlexBetween gap="1.5rem">
+          <Box onClick={() => navigate("/home")} sx={{ cursor: "pointer" }}>
+            <Typography
+              fontWeight="700"
+              fontSize="1.6rem"
+              color={theme.palette.mode === "dark" ? "#ffffff" : "primary"}
+            >
+              LocalVoice
+            </Typography>
+            <Typography fontSize="0.7rem" color="gray">
+              Pune Civic Portal
+            </Typography>
+          </Box>
 
           {isNonMobileScreens && (
             <FlexBetween
               backgroundColor={neutralLight}
               borderRadius="20px"
               gap="1rem"
-              padding="0.2rem 1.2rem"
+              padding="0.3rem 1.2rem"
             >
-              <InputBase placeholder="Search issues..." />
+              <InputBase placeholder="Search issues..." fullWidth />
               <IconButton size="small">
                 <Search />
               </IconButton>
@@ -88,14 +81,8 @@ const Navbar = () => {
         {isNonMobileScreens ? (
           <FlexBetween gap="1.5rem">
             <IconButton onClick={() => dispatch(setMode())}>
-              {theme.palette.mode === "dark" ? (
-                <DarkMode />
-              ) : (
-                <LightMode sx={{ color: dark }} />
-              )}
+              {theme.palette.mode === "dark" ? <DarkMode /> : <LightMode />}
             </IconButton>
-
-            <Notifications sx={{ fontSize: "22px", color: dark }} />
 
             <FormControl variant="standard">
               <Select
@@ -105,10 +92,6 @@ const Navbar = () => {
                   width: "160px",
                   borderRadius: "20px",
                   p: "0.25rem 1rem",
-                  "& .MuiSvgIcon-root": { pr: "0.25rem" },
-                  "& .MuiSelect-select:focus": {
-                    backgroundColor: neutralLight,
-                  },
                 }}
                 input={<InputBase />}
               >
@@ -122,9 +105,7 @@ const Navbar = () => {
             </FormControl>
           </FlexBetween>
         ) : (
-          <IconButton
-            onClick={() => setIsMobileMenuToggled(!isMobileMenuToggled)}
-          >
+          <IconButton onClick={() => setIsMobileMenuToggled(true)}>
             <Menu />
           </IconButton>
         )}
@@ -138,29 +119,19 @@ const Navbar = () => {
           top="0"
           height="100%"
           zIndex="2000"
-          width="300px"
+          width="280px"
           backgroundColor={background}
-          boxShadow="-2px 0 10px rgba(0,0,0,0.1)"
+          boxShadow="-4px 0 12px rgba(0,0,0,0.1)"
         >
           <Box display="flex" justifyContent="flex-end" p="1rem">
-            <IconButton
-              onClick={() => setIsMobileMenuToggled(false)}
-            >
+            <IconButton onClick={() => setIsMobileMenuToggled(false)}>
               <Close />
             </IconButton>
           </Box>
 
-          <FlexBetween
-            flexDirection="column"
-            gap="2rem"
-            p="2rem"
-          >
+          <FlexBetween flexDirection="column" gap="2rem" p="2rem">
             <IconButton onClick={() => dispatch(setMode())}>
-              {theme.palette.mode === "dark" ? (
-                <DarkMode />
-              ) : (
-                <LightMode sx={{ color: dark }} />
-              )}
+              {theme.palette.mode === "dark" ? <DarkMode /> : <LightMode />}
             </IconButton>
 
             <FormControl variant="standard">
@@ -173,9 +144,7 @@ const Navbar = () => {
                 }}
                 input={<InputBase />}
               >
-                <MenuItem value={fullName}>
-                  <Typography>{fullName}</Typography>
-                </MenuItem>
+                <MenuItem value={fullName}>{fullName}</MenuItem>
                 <MenuItem onClick={() => dispatch(setLogout())}>
                   Log Out
                 </MenuItem>

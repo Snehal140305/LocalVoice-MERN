@@ -1,5 +1,4 @@
 import {
-  EditOutlined,
   DeleteOutlined,
   ImageOutlined,
 } from "@mui/icons-material";
@@ -27,14 +26,19 @@ const MyPostWidget = ({ picturePath }) => {
 
   const [isImage, setIsImage] = useState(false);
   const [image, setImage] = useState(null);
-
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Road");
   const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handlePost = async () => {
+    if (!title.trim() || !description.trim()) {
+      alert("Please enter issue title and description");
+      return;
+    }
+
     try {
-      console.log("HANDLE POST CLICKED");
+      setLoading(true);
 
       const formData = new FormData();
       formData.append("title", title);
@@ -48,38 +52,28 @@ const MyPostWidget = ({ picturePath }) => {
 
       const response = await fetch("http://localhost:6001/posts", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
-      console.log("POST STATUS:", response.status);
+      if (!response.ok) throw new Error("Post failed");
 
-      if (!response.ok) {
-        alert("Post failed");
-        return;
-      }
-
-      // 🔁 Re-fetch all posts
       const postsResponse = await fetch("http://localhost:6001/posts", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const allPosts = await postsResponse.json();
       dispatch(setPosts({ posts: allPosts }));
 
-      // reset fields
       setTitle("");
       setDescription("");
       setCategory("Road");
       setImage(null);
       setIsImage(false);
-    } catch (error) {
-      console.error("Post error:", error);
+    } catch (err) {
+      alert("Something went wrong while raising issue.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,7 +82,7 @@ const MyPostWidget = ({ picturePath }) => {
       <FlexBetween gap="1.5rem">
         <UserImage image={picturePath} />
         <InputBase
-          placeholder="Issue title"
+          placeholder="Issue Title (e.g. No water supply in Ward 5)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           sx={{
@@ -101,7 +95,7 @@ const MyPostWidget = ({ picturePath }) => {
       </FlexBetween>
 
       <InputBase
-        placeholder="Describe the issue..."
+        placeholder="Describe the issue in detail..."
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         sx={{
@@ -133,12 +127,7 @@ const MyPostWidget = ({ picturePath }) => {
       </Box>
 
       {isImage && (
-        <Box
-          border={`1px solid ${palette.neutral.medium}`}
-          borderRadius="5px"
-          mt="1rem"
-          p="1rem"
-        >
+        <Box border={`1px solid ${palette.neutral.medium}`} mt="1rem" p="1rem">
           <Dropzone
             acceptedFiles=".jpg,.jpeg,.png"
             multiple={false}
@@ -151,17 +140,9 @@ const MyPostWidget = ({ picturePath }) => {
                   border={`2px dashed ${palette.primary.main}`}
                   p="1rem"
                   width="100%"
-                  sx={{ cursor: "pointer" }}
                 >
                   <input {...getInputProps()} />
-                  {!image ? (
-                    <p>Add Image Here</p>
-                  ) : (
-                    <FlexBetween>
-                      <Typography>{image.name}</Typography>
-                      <EditOutlined />
-                    </FlexBetween>
-                  )}
+                  {!image ? <p>Add Image</p> : <Typography>{image.name}</Typography>}
                 </Box>
                 {image && (
                   <IconButton onClick={() => setImage(null)}>
@@ -174,23 +155,25 @@ const MyPostWidget = ({ picturePath }) => {
         </Box>
       )}
 
-      <Divider sx={{ margin: "1.25rem 0" }} />
+      <Divider sx={{ my: "1rem" }} />
 
       <FlexBetween>
-        <FlexBetween gap="0.25rem" onClick={() => setIsImage(!isImage)}>
-          <ImageOutlined sx={{ color: palette.neutral.mediumMain }} />
-          <Typography color={palette.neutral.mediumMain}>Image</Typography>
+        <FlexBetween onClick={() => setIsImage(!isImage)}>
+          <ImageOutlined />
+          <Typography ml="0.5rem">Image</Typography>
         </FlexBetween>
 
         <Button
+          disabled={loading}
           onClick={handlePost}
           sx={{
-            color: palette.background.alt,
             backgroundColor: palette.primary.main,
             borderRadius: "3rem",
+            color: "white",
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          RAISE ISSUE
+          {loading ? "Posting..." : "REPORT ISSUE"}
         </Button>
       </FlexBetween>
     </WidgetWrapper>

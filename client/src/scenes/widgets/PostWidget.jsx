@@ -1,6 +1,7 @@
 import {
   ChatBubbleOutlineOutlined,
   ShareOutlined,
+  DeleteOutline,
 } from "@mui/icons-material";
 import {
   Box,
@@ -16,10 +17,9 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setPost } from "state";
 
-
-
 const PostWidget = ({
   postId,
+  postUserId,
   name,
   description,
   location,
@@ -39,9 +39,6 @@ const PostWidget = ({
   const main = palette.neutral.main;
   const medium = palette.neutral.medium;
 
-  const isUpvoted = upvotes.includes(loggedInUserId);
-  const isDownvoted = downvotes.includes(loggedInUserId);
-
   const votePost = async (voteType) => {
     const response = await fetch(
       `http://localhost:6001/posts/${postId}/vote`,
@@ -58,26 +55,43 @@ const PostWidget = ({
     const updatedPost = await response.json();
     dispatch(setPost({ post: updatedPost }));
   };
+
   const addComment = async () => {
-  if (!commentText.trim()) return;
+    if (!commentText.trim()) return;
 
-  const response = await fetch(
-    `http://localhost:6001/posts/${postId}/comment`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text: commentText }),
+    const response = await fetch(
+      `http://localhost:6001/posts/${postId}/comment`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: commentText }),
+      }
+    );
+
+    const updatedPost = await response.json();
+    dispatch(setPost({ post: updatedPost }));
+    setCommentText("");
+  };
+
+  // 🗑 DELETE ISSUE (only creator)
+  const deleteIssue = async () => {
+    const response = await fetch(
+      `http://localhost:6001/posts/${postId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      window.location.reload();
     }
-  );
-
-  const updatedPost = await response.json();
-  dispatch(setPost({ post: updatedPost }));
-  setCommentText("");
-};
-
+  };
 
   return (
     <WidgetWrapper m="2rem 0">
@@ -94,6 +108,13 @@ const PostWidget = ({
             </Typography>
           </Box>
         </FlexBetween>
+
+        {/* 🔴 DELETE BUTTON – only for creator */}
+        {loggedInUserId === postUserId && (
+          <IconButton onClick={deleteIssue}>
+            <DeleteOutline sx={{ color: "red" }} />
+          </IconButton>
+        )}
       </FlexBetween>
 
       {/* 🔹 CONTENT */}
@@ -115,16 +136,12 @@ const PostWidget = ({
       <FlexBetween mt="0.5rem">
         <FlexBetween gap="1rem">
           <FlexBetween gap="0.3rem">
-            <IconButton onClick={() => votePost("up")}>
-              👍
-            </IconButton>
+            <IconButton onClick={() => votePost("up")}>👍</IconButton>
             <Typography>{upvotes.length}</Typography>
           </FlexBetween>
 
           <FlexBetween gap="0.3rem">
-            <IconButton onClick={() => votePost("down")}>
-              👎
-            </IconButton>
+            <IconButton onClick={() => votePost("down")}>👎</IconButton>
             <Typography>{downvotes.length}</Typography>
           </FlexBetween>
 
@@ -141,48 +158,46 @@ const PostWidget = ({
         </IconButton>
       </FlexBetween>
 
+      {/* 🔹 COMMENTS */}
       {isComments && (
-  <Box mt="0.5rem">
-    {/* 🔹 Comment Input */}
-    <Box display="flex" gap="0.5rem" mb="0.5rem">
-      <input
-        type="text"
-        placeholder="Write a comment..."
-        value={commentText}
-        onChange={(e) => setCommentText(e.target.value)}
-        style={{
-          flex: 1,
-          padding: "0.5rem",
-          borderRadius: "0.5rem",
-          border: "1px solid #ccc",
-        }}
-      />
-      <button
-        onClick={addComment}
-        style={{
-          padding: "0.5rem 1rem",
-          borderRadius: "0.5rem",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        Post
-      </button>
-    </Box>
+        <Box mt="0.5rem">
+          <Box display="flex" gap="0.5rem" mb="0.5rem">
+            <input
+              type="text"
+              placeholder="Write a comment..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "0.5rem",
+                borderRadius: "0.5rem",
+                border: "1px solid #ccc",
+              }}
+            />
+            <button
+              onClick={addComment}
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: "0.5rem",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Post
+            </button>
+          </Box>
 
-    {/* 🔹 Existing Comments */}
-    {comments.map((comment, i) => (
-      <Box key={i}>
-        <Divider />
-        <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
-          {comment.text}
-        </Typography>
-      </Box>
-    ))}
-    <Divider />
-  </Box>
-)}
-
+          {comments.map((comment, i) => (
+            <Box key={i}>
+              <Divider />
+              <Typography sx={{ color: main, m: "0.5rem 0", pl: "1rem" }}>
+                {comment.text}
+              </Typography>
+            </Box>
+          ))}
+          <Divider />
+        </Box>
+      )}
     </WidgetWrapper>
   );
 };

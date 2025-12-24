@@ -34,30 +34,31 @@ const PostsWidget = ({ userId, isProfile = false }) => {
   };
 
   useEffect(() => {
-    if (isProfile) {
-      getUserPosts();
-    } else {
-      getPosts();
-    }
+    isProfile ? getUserPosts() : getPosts();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
       {Array.isArray(posts) &&
-        posts.map((post) => (
-          <PostWidget
-            key={post._id}
-            postId={post._id}
-            name={`${post.userId.firstName} ${post.userId.lastName}`}
-            location={post.userId.location}
-            userPicturePath={post.userId.picturePath}
-            description={post.description}
-            picturePath={post.picturePath}
-            upvotes={post.upvotes}
-            downvotes={post.downvotes}
-            comments={post.comments}
-          />
-        ))}
+        posts.map((post) => {
+          const user = post.userId || {}; // 🔐 SAFETY FIX
+
+          return (
+            <PostWidget
+              key={post._id}
+              postId={post._id}
+              postUserId={user._id}
+              name={`${user.firstName || "Citizen"} ${user.lastName || ""}`}
+              location={user.location || "Unknown Area"}
+              userPicturePath={user.picturePath}
+              description={post.description}
+              picturePath={post.picturePath}
+              upvotes={post.upvotes || []}
+              downvotes={post.downvotes || []}
+              comments={post.comments || []}
+            />
+          );
+        })}
     </>
   );
 };
