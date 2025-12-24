@@ -1,16 +1,18 @@
-import { Box, Typography, useMediaQuery, useTheme, Button } from "@mui/material";
+import { Box, useMediaQuery,  Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 import Navbar from "scenes/navbar";
 import UserWidget from "scenes/widgets/UserWidget";
 import MyPostWidget from "scenes/widgets/MyPostWidget";
 import PostsWidget from "scenes/widgets/PostsWidget";
+
 import CityStatsWidget from "scenes/widgets/CityStatsWidget";
+
 
 const HomePage = () => {
   const isNonMobileScreens = useMediaQuery("(min-width:1000px)");
   const { _id, picturePath } = useSelector((state) => state.user);
-  const { palette } = useTheme();
+  
 
   const [showStats, setShowStats] = useState(false);
 
@@ -43,8 +45,10 @@ const HomePage = () => {
 
         {/* RIGHT CITY STATS PANEL - DESKTOP */}
         {isNonMobileScreens && (
+
           <Box flexBasis="22%">
             <CityStatsWidget />
+
           </Box>
         )}
       </Box>
