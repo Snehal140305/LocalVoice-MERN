@@ -8,7 +8,7 @@ const CityStatsWidget = () => {
   const [stats, setStats] = useState({});
 
   const getStats = useCallback(async () => {
-    const response = await fetch("http://localhost:6001/posts/stats", {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/posts/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();

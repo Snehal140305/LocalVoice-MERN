@@ -50,7 +50,7 @@ const MyPostWidget = ({ picturePath }) => {
         formData.append("picturePath", image.name);
       }
 
-      const response = await fetch("http://localhost:6001/posts", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -58,7 +58,7 @@ const MyPostWidget = ({ picturePath }) => {
 
       if (!response.ok) throw new Error("Post failed");
 
-      const postsResponse = await fetch("http://localhost:6001/posts", {
+      const postsResponse = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

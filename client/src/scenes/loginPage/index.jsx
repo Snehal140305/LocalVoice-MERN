@@ -30,7 +30,7 @@ const LoginPage = () => {
           Together for better local solutions.
         </Typography>
 
-        {/* ✅ THIS FIXES EVERYTHING */}
+        
         <Form />
       </Box>
     </Box>
