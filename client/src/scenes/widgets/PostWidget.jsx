@@ -41,7 +41,7 @@ const PostWidget = ({
 
   const votePost = async (voteType) => {
     const response = await fetch(
-      `http://localhost:6001/posts/${postId}/vote`,
+      `${process.env.REACT_APP_API_URL}/posts/${postId}/vote`,
       {
         method: "PATCH",
         headers: {
@@ -60,7 +60,7 @@ const PostWidget = ({
     if (!commentText.trim()) return;
 
     const response = await fetch(
-      `http://localhost:6001/posts/${postId}/comment`,
+      `${process.env.REACT_APP_API_URL}/posts/${postId}/comment`,
       {
         method: "POST",
         headers: {
@@ -79,7 +79,7 @@ const PostWidget = ({
   // 🗑 DELETE ISSUE (only creator)
   const deleteIssue = async () => {
     const response = await fetch(
-      `http://localhost:6001/posts/${postId}`,
+      `${process.env.REACT_APP_API_URL}/posts/${postId}`,
       {
         method: "DELETE",
         headers: {
@@ -128,7 +128,7 @@ const PostWidget = ({
           height="auto"
           alt="issue"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`http://localhost:6001/assets/${picturePath}`}
+          src={`${process.env.REACT_APP_API_URL}/assets/${picturePath}`}
         />
       )}
 
