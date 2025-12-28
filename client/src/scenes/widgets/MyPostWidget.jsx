@@ -1,7 +1,4 @@
-import {
-  DeleteOutlined,
-  ImageOutlined,
-} from "@mui/icons-material";
+import { DeleteOutlined, ImageOutlined } from "@mui/icons-material";
 import {
   Box,
   Divider,
@@ -58,9 +55,12 @@ const MyPostWidget = ({ picturePath }) => {
 
       if (!response.ok) throw new Error("Post failed");
 
-      const postsResponse = await fetch(`${process.env.REACT_APP_API_URL}/posts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const postsResponse = await fetch(
+        `${process.env.REACT_APP_API_URL}/posts`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const allPosts = await postsResponse.json();
       dispatch(setPosts({ posts: allPosts }));
@@ -142,7 +142,11 @@ const MyPostWidget = ({ picturePath }) => {
                   width="100%"
                 >
                   <input {...getInputProps()} />
-                  {!image ? <p>Add Image</p> : <Typography>{image.name}</Typography>}
+                  {!image ? (
+                    <p>Add Image</p>
+                  ) : (
+                    <Typography>{image.name}</Typography>
+                  )}
                 </Box>
                 {image && (
                   <IconButton onClick={() => setImage(null)}>
